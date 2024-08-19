@@ -5,7 +5,7 @@ import numpy as np
 
 pd.set_option('display.max_rows', 500)
 
-conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
+conn = sqlite3.connect(r'data\financial_data.db')
 ratiosTTM = pd.read_sql_query('SELECT * FROM RatiosTTM', conn)
 assets = pd.read_sql_query('SELECT * FROM Assets', conn)
 
