@@ -7,12 +7,17 @@ import plotly.express as px
 import requests
 import sys
 import platform
+import os
 
 if platform.system() == 'Darwin':
     sys.path.insert(1, r'/Users/preben/Documents/GitHub/Screenr')
 else:
     sys.path.insert(1, r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr')
-import backend
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from backend.database import backend
+
 
 app = dash.Dash(__name__, external_stylesheets=['/assets/main.css'])
 

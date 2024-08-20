@@ -3,9 +3,9 @@ import pandas as pd
 import streamlit as st
 import sqlite3
 
-conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
+conn = sqlite3.connect(r'data\financial_data.db')
 
-df = pd.read_sql_query('SELECT * FROM KeyMetricsTTM', conn)
+df = pd.read_sql_query('SELECT * FROM RatiosTTM', conn)
 
 conn.close()
 

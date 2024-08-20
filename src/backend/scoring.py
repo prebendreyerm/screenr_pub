@@ -14,7 +14,7 @@ df = pd.merge(assets, ratiosTTM, on='symbol', how='left')
 df.rename(columns={'dividendYielTTM': 'dividendYieldTTM'}, inplace=True)
 df.fillna(0, inplace=True)
 
-scoring_baseline = pd.read_csv(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\Baselines\baseline.csv')
+scoring_baseline = pd.read_csv(r'data\Baselines\baseline.csv')
 scoring_baseline['scoring_columns'] = scoring_baseline['scoring_columns'] + 'TTM'
 
 
