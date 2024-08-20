@@ -36,7 +36,7 @@ def fetch_and_insert_data(api_url, table_name):
     except Exception as e:
         print(f'An error occurred while processing {api_url}: {e}')
 
-# Function to get all tickers from the Assets table
+
 def get_all_tickers():
     '''function for getting all the tickers to loop through and populate tables'''
     try:
@@ -54,7 +54,7 @@ def get_all_tickers():
         print(f'An error occurred while fetching tickers: {e}')
         return []
     
-# Function to update the given table
+
 def fetch_and_update_data(api_url, table_name, symbol=None):
     '''Function to fetch and insert new data into the given table, including the symbol if provided'''
     try:
@@ -84,7 +84,7 @@ def fetch_and_update_data(api_url, table_name, symbol=None):
     except Exception as e:
         print(f'An error occurred while processing {api_url}: {e}')
 
-# Clear the table before starting the loop
+
 def clear_table(table_name):
     '''function to clear the contents of an existing table before updating it with new values'''
     conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
