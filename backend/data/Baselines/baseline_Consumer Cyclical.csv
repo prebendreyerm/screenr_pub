@@ -13,7 +13,6 @@
 11,longTermDebtToCapitalization,True
 12,grossProfitMargin,True
 13,cashRatio,False
-14,dividendPayoutRatio,True
 15,operatingCashFlowSalesRatio,True
 16,priceToOperatingCashFlowsRatio,False
 17,fixedAssetTurnover,False

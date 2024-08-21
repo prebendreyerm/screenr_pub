@@ -1,6 +1,5 @@
 ,scoring_columns,booleans
 0,enterpriseValueMultiple,True
-1,dividendPayoutRatio,True
 2,priceToSalesRatio,True
 3,receivablesTurnover,False
 4,longTermDebtToCapitalization,True

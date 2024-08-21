@@ -1,5 +1,4 @@
 ,scoring_columns,booleans
-0,dividendPayoutRatio,True
 1,companyEquityMultiplier,True
 2,currentRatio,False
 3,daysOfPayablesOutstanding,False

@@ -26,7 +26,6 @@
 24,capitalExpenditureCoverageRatio,False
 25,operatingCycle,True
 26,operatingProfitMargin,True
-27,dividendPayoutRatio,True
 28,daysOfPayablesOutstanding,False
 29,priceToOperatingCashFlowsRatio,True
 30,shortTermCoverageRatios,True

@@ -5,7 +5,6 @@
 3,payoutRatio,False
 4,dividendYield,True
 5,operatingCashFlowPerShare,False
-6,dividendPayoutRatio,True
 7,freeCashFlowPerShare,True
 8,debtRatio,False
 9,shortTermCoverageRatios,True

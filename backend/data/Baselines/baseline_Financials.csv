@@ -17,7 +17,6 @@
 15,totalDebtToCapitalization,True
 16,payoutRatio,True
 17,currentRatio,False
-18,revenue_growth,False
 19,priceToSalesRatio,False
 20,cashFlowToDebtRatio,False
 21,receivablesTurnover,True

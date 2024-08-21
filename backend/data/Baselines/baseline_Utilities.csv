@@ -24,7 +24,6 @@
 22,debtRatio,True
 23,returnOnEquity,True
 24,returnOnCapitalEmployed,True
-25,revenue_growth,False
 26,priceToOperatingCashFlowsRatio,True
 27,dividendPayoutRatio,True
 28,priceEarningsToGrowthRatio,True

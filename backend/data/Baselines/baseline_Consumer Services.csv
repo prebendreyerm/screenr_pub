@@ -12,7 +12,6 @@
 10,debtRatio,True
 11,returnOnAssets,False
 12,pretaxProfitMargin,True
-13,dividendPayoutRatio,True
 14,ebtPerEbit,False
 15,payablesTurnover,False
 16,priceEarningsToGrowthRatio,False

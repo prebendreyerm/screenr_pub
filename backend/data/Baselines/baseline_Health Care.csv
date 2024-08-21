@@ -4,7 +4,6 @@
 2,dividendPaidAndCapexCoverageRatio,False
 3,ebtPerEbit,False
 4,longTermDebtToCapitalization,True
-5,dividendPayoutRatio,True
 6,returnOnCapitalEmployed,True
 7,debtRatio,True
 8,cashRatio,False
