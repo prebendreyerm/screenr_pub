@@ -23,6 +23,9 @@ def get_scored_stocks():
         limit = int(request.args.get('limit', 10))
         sort_by = request.args.get('sort_by', 'score')
         sort_order = request.args.get('sort_order', 'desc')
+        name_search = request.args.get('name_search', '').lower()
+        symbol_search = request.args.get('symbol_search', '').lower()
+        sector_search = request.args.get('sector_search', '').lower()
 
         # Connect to the database
         conn = get_db_connection()
@@ -42,6 +45,14 @@ def get_scored_stocks():
 
         # Calculate scores
         df_scored = scoring.calculate_score(df, np.array(scoring_baseline['scoring_columns']), np.array(scoring_baseline['booleans']))
+
+        # Applying search
+        if name_search:
+            df_scored = df_scored[df_scored['name'].str.lower().str.contains(name_search)]
+        if symbol_search:
+            df_scored = df_scored[df_scored['symbol'].str.lower().str.contains(symbol_search)]
+        if sector_search:
+            df_scored = df_scored[df_scored['sector'].str.lower().str.contains(sector_search)]
 
         # Apply sorting
         sort_by = sort_by if sort_by in df_scored.columns else 'score'

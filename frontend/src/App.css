@@ -1,40 +1,91 @@
 /* App.css */
 
-/* Default light mode styles */
-.App {
-  background-color: #ffffff;
-  color: #000000;
+
+/* Apply dark background to the entire page */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #343a40; /* Bootstrap's dark background color */
+  color: #ffffff; /* Ensures all text is light colored */
 }
 
-.App-header {
-  background-color: #f8f9fa;
+/* Ensure the App component takes up the full height and width of the viewport */
+.App {
+  min-height: 100vh; /* Ensures the app takes the full viewport height */
+  min-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  justify-content: center;
+  text-align: left;
+  padding: 20px;
+  width: 100%; /* Makes sure it takes the full width of the viewport */
+}
+
+/* Additional styles to ensure the content is centered and has padding */
+.container {
+  max-width: 100%;
+  padding: 0px;
+}
+
+
+
+.table {
+  background-color: #333;
+  color: #ffffff;
+  border-collapse: collapse;
+}
+.table th, .table td {
+  border: 1px solid #8d8c8c; /* Add borders between cells */
+  padding: 5px;
+}
+
+.table-container {
+  width: 100%;
+  margin: 0 auto;
 }
 
 .table {
-  background-color: #ffffff;
-  color: #000000;
+  width: 100%;
+  border-collapse: collapse;
 }
 
-/* Dark mode styles */
-.dark-mode {
-  background-color: #333;
-  color: #ffffff;
+.table th,
+.table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
 }
 
-.dark-mode .App-header {
-  background-color: #333;
+.table th {
+  background-color: #212529;
+  position: relative;
 }
 
-.dark-mode .table {
-  background-color: #2b2b2b;
-  color: #ffffff;
+.search-cell {
+  background-color: #212529;
+  border-color: #ffffff;
 }
 
-.dark-mode .table thead {
-  background-color: #333;
+.search-input {
+  background-color: #212529;
+  border-color: #ffffff;
+  border: none;
+  width: 100%;
 }
 
-.dark-mode .table tbody {
-  background-color: #333;
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.pagination {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.pagination button {
+  padding: 5px 10px;
 }
 
