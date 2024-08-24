@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min';
 
 interface StocksTableProps {
   apiUrl: string;
@@ -29,6 +30,8 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
     symbol: '',
     sector: ''
   });
+  const [strategyQuery, setStrategyQuery] = useState<string>('baseline');
+
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -45,6 +48,7 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
             name_search: searchQuery.name || undefined,
             symbol_search: searchQuery.symbol || undefined,
             sector_search: searchQuery.sector || undefined,
+            strategy_filter: strategyQuery || undefined,
           },
         });
         setData(response.data.data);
@@ -57,7 +61,7 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
     };
 
     fetchData();
-  }, [apiUrl, columns, currentPage, sortBy, sortOrder, searchQuery]); // Include searchQuery as a dependency
+  }, [apiUrl, columns, currentPage, sortBy, sortOrder, searchQuery, strategyQuery]); // Include searchQuery as a dependency
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -79,11 +83,11 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
     }
   };
 
-  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      setSearchQuery(inputQuery); // Update searchQuery to trigger useEffect
-    }
+  const handleStrategyChange = (strategy: string) => {
+    setStrategyQuery(strategy);
+    setCurrentPage(1); // Reset to first page when strategy changes
   };
+  
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= Math.ceil(totalItems / itemsPerPage)) {
@@ -101,17 +105,77 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
 
   return (
     <div className="table-container">
+      <div className="dropdown mb-3">
+        <button
+          className="btn btn-primary btn-sm dropdown-toggle"
+          type="button"
+          id="dropdownMenuButton"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          Strategy
+        </button>
+        <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline')}>Baseline</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_technology')}>Technology</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Basic Materials')}>Basic Materials</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Communication Services')}>Communication Services</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Cyclical')}>Consumer Cyclical</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Defensive')}>Consumer Defensive</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Discretionary')}>Consumer Discretionary</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Goods')}>Consumer Goods</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Services')}>Consumer Services</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Staples')}>Consumer Staples</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Energy')}>Energy</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Finance')}>Finance</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Financials')}>Financials</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Telecommunications')}>Telecommunications</button>
+          </li>
+          <li>
+            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Utilities')}>Utilities</button>
+          </li>
+          {/* Add more strategies as needed */}
+        </ul>
+      </div>
+
       <table className="table table-dark">
         <thead>
           <tr>
-            {columns.map(column => (
+            {columns.map((column) => (
               <th key={column.key} onClick={() => handleSort(column.key)}>
                 {column.label} {sortBy === column.key ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
               </th>
             ))}
           </tr>
           <tr>
-            {columns.map(column => (
+            {columns.map((column) => (
               <td key={column.key} className={`search-cell ${column.key === 'name' ? 'active' : ''}`}>
                 {column.key === 'name' && (
                   <input
@@ -150,19 +214,30 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
         <tbody>
           {data.map((item, index) => (
             <tr key={index}>
-              {columns.map(column => (
+              {columns.map((column) => (
                 <td key={column.key}>{item[column.key]}</td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
-      <div className='pagination'>
-        <button type="button" className='btn btn-primary' onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+  
+      <div className="pagination">
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
           Previous
         </button>
         <span> Page {currentPage} of {totalPages} </span>
-        <button type="button" className='btn btn-primary' onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
           Next
         </button>
       </div>
