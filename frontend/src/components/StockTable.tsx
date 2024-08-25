@@ -48,7 +48,7 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
             name_search: searchQuery.name || undefined,
             symbol_search: searchQuery.symbol || undefined,
             sector_search: searchQuery.sector || undefined,
-            strategy_filter: strategyQuery || undefined,
+            strategy: strategyQuery || undefined,
           },
         });
         setData(response.data.data);
