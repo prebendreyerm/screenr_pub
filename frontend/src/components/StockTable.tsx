@@ -32,7 +32,7 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
   });
   const [strategyQuery, setStrategyQuery] = useState<string>('baseline');
 
-  const itemsPerPage = 20;
+  const itemsPerPage = 19;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,25 +132,13 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
             <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Cyclical')}>Consumer Cyclical</button>
           </li>
           <li>
-            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Defensive')}>Consumer Defensive</button>
-          </li>
-          <li>
-            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Discretionary')}>Consumer Discretionary</button>
-          </li>
-          <li>
             <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Goods')}>Consumer Goods</button>
-          </li>
-          <li>
-            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Services')}>Consumer Services</button>
           </li>
           <li>
             <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Consumer Staples')}>Consumer Staples</button>
           </li>
           <li>
             <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Energy')}>Energy</button>
-          </li>
-          <li>
-            <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Finance')}>Finance</button>
           </li>
           <li>
             <button className="dropdown-item" onClick={() => handleStrategyChange('baseline_Financials')}>Financials</button>

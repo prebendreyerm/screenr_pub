@@ -25,7 +25,6 @@
 23,returnOnEquity,True
 24,returnOnCapitalEmployed,True
 26,priceToOperatingCashFlowsRatio,True
-27,dividendPayoutRatio,True
 28,priceEarningsToGrowthRatio,True
 29,fixedAssetTurnover,True
 30,cashConversionCycle,True

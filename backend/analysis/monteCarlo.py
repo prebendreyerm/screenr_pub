@@ -15,9 +15,9 @@ df = pd.read_csv('database.csv')
 #  'Consumer Goods', 'Communication Services', 'Consumer Defensive',
 #  'Financials', 'Consumer Cyclical']
 
-sectors = ['Utilities', 'Consumer Services',
- 'Consumer Goods', 'Communication Services', 'Consumer Defensive',
- 'Financials', 'Consumer Cyclical']
+sectors = ['Technology', 'Energy', 'Basic Materials', 'Healthcare', 'Consumer Defensive',
+ 'Financial Services', 'Consumer Cyclical', 'Communication Services',
+ 'Real Estate', 'Utilities', 'Industrials']
 
 
 

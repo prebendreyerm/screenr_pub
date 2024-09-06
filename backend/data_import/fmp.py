@@ -21,7 +21,7 @@ def fetch_and_insert_data(api_url, table_name):
                 df = pd.DataFrame(data)
 
                 # Insert data into the corresponding table
-                conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
+                conn = sqlite3.connect(r'backend\data\financial_data.db')
                 try:
                     df.to_sql(table_name, conn, if_exists='append', index=False)
                     conn.commit()
@@ -40,7 +40,7 @@ def fetch_and_insert_data(api_url, table_name):
 def get_all_tickers():
     '''function for getting all the tickers to loop through and populate tables'''
     try:
-        conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
+        conn = sqlite3.connect(r'backend\data\financial_data.db')
         cursor = conn.cursor()
 
         cursor.execute("SELECT DISTINCT symbol FROM Assets")
@@ -70,7 +70,7 @@ def fetch_and_update_data(api_url, table_name, symbol=None):
                     df['symbol'] = symbol
 
                 # Connect to the SQLite database
-                conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
+                conn = sqlite3.connect(r'backend\data\financial_data.db')
 
                 # Insert the new data into the table
                 df.to_sql(table_name, conn, if_exists='append', index=False)
@@ -87,13 +87,14 @@ def fetch_and_update_data(api_url, table_name, symbol=None):
 
 def clear_table(table_name):
     '''function to clear the contents of an existing table before updating it with new values'''
-    conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
+    conn = sqlite3.connect(r'backend\data\financial_data.db')
     cursor = conn.cursor()
 
     # Clear the contents of the table
     cursor.execute(f'DELETE FROM {table_name}')
     conn.commit()
     conn.close()
+
 
 
 if __name__ == '__main__':
