@@ -4,11 +4,13 @@ import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
 import time
+import sqlite3
 
 load_dotenv()
 
 api_key = os.getenv('API_KEY')
 
+table_name = 'Assets'
 url = f'https://financialmodelingprep.com/api/v3/available-traded/list?apikey={api_key}'
 r = requests.get(url, timeout=10)
 available_traded = r.json()
@@ -21,7 +23,7 @@ df = df[(df['type'] == 'stock') & (df['exchangeShortName'].isin(available_exchan
 def get_industry_sector(ticker):
     '''Getting the industry and sector for the different assets '''
     url = f'https://financialmodelingprep.com/api/v3/profile/{ticker}?apikey={api_key}'
-    r = requests.get(url, timeout=10)
+    r = requests.get(url)
     r = r.json()[0]
     industry = r['industry']
     sector = r['sector']
@@ -37,14 +39,23 @@ for symbol in tqdm(df['symbol'], desc="Fetching industry and sector data"):
     industries.append(industry)
     sectors.append(sector)
     
-    # Respect API rate limit by adding a delay
-    # time.sleep(0.2)  # 0.2 seconds delay means 5 requests per second, or 300 requests per minute
-
 # Assign the industries and sectors to the DataFrame
 df['industry'] = industries
 df['sector'] = sectors
 
-df.to_csv('stonks.csv')
+# Drop the 'Unnamed: 0' column if it exists
+if 'Unnamed: 0' in df.columns:
+    df = df.drop(columns=['Unnamed: 0'])
+
+df = df.dropna(subset=['name'])
+df = df.dropna(subset=['symbol'])
+df = df.dropna(subset=['sector'])
+df = df.dropna(subset=['industry'])
+
+
+
+conn = sqlite3.connect(r'backend\data\financial_data.db')
+df.to_sql(table_name, conn, if_exists='append', index=False)
 
 # Print the updated DataFrame
 print(df)
