@@ -48,7 +48,7 @@ def update_keyMetricsTTM():
     table = 'KeyMetricsTTM'
     fmp.clear_table(table)
     for ticker in tqdm(tickers):
-        url = f'https://financialmodelingprep.com/api/v3/key-metrics-TTM/{ticker}?period=Quarter&apikey={api_key}'
+        url = f'https://financialmodelingprep.com/api/v3/key-metrics-TTM/{ticker}?apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
 
 def update_ratiosTTM():
@@ -56,7 +56,7 @@ def update_ratiosTTM():
     table = 'RatiosTTM'
     fmp.clear_table(table)
     for ticker in tqdm(tickers):
-        url = f'https://financialmodelingprep.com/api/v3/ratios-TTM/{ticker}?period=annual&apikey={api_key}'
+        url = f'https://financialmodelingprep.com/api/v3/ratios-TTM/{ticker}?apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
 
 
