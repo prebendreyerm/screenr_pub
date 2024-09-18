@@ -1,18 +1,39 @@
-import pandas as pd
 import sqlite3
+import pandas as pd
 
-
+# Connect to SQLite database (or create it if it doesn't exist)
 conn = sqlite3.connect(r'backend\data\financial_data.db')
-
 cursor = conn.cursor()
 
-cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+# Create Assets table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Portfolio (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT UNIQUE,
+    cashAmount REAL,
+    totalValue REAL,
+    lastUpdate TEXT
+)
+''')
 
-tables = cursor.fetchall()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Holdings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker TEXT,
+    shares REAL,
+    costBasis REAL,
+    startDate TEXT,
+    endDate TEXT,
+    lastUpdate TEXT
+)
+''')
 
-for table in tables:
-    print(table[0])
-
-conn.close()
-
-#test comment 2
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS StockPrices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    holding_id INTEGER,
+    date TEXT,
+    closePrice REAL,
+    FOREIGN KEY (holding_id) REFERENCES Holdings(id)
+)
+''')

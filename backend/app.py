@@ -91,5 +91,7 @@ def get_stocks():
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
+
+
 if __name__ == '__main__':
     app.run(debug=True)
