@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import StockTable from './components/StockTable'; // Make sure this path is correct
 import Home from './components/Home'; // Import Home component
 import About from './components/About'; // Import About component
+import Portfolio from './components/Portfolio';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import './App.css';
@@ -45,6 +46,9 @@ const App: React.FC = () => {
                   <Link className="nav-link" to="/stocks">Screener</Link>
                 </li>
                 <li className="nav-item">
+                  <Link className="nav-link" to="/portfolio">Portfolio</Link>
+                </li>
+                <li className="nav-item">
                   <Link className="nav-link" to="/about">About</Link>
                 </li>
               </ul>
@@ -57,6 +61,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/stocks" element={<StockTable apiUrl={apiUrl} columns={columns} />} />
           <Route path="/about" element={<About />} />
+          <Route path="/portfolio" element={<Portfolio />} />
         </Routes>
       </div>
     </Router>

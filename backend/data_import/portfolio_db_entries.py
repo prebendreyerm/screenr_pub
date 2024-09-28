@@ -36,4 +36,4 @@ CREATE TABLE IF NOT EXISTS StockPrices (
     closePrice REAL,
     FOREIGN KEY (holding_id) REFERENCES Holdings(id)
 )
-''')
+''') 

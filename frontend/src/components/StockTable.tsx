@@ -96,7 +96,7 @@ const StocksTable: React.FC<StocksTableProps> = ({ apiUrl, columns }) => {
   };
 
   if (loading) return (
-    <div class="spinner-border" role="status">
+    <div className="spinner-border" role="status">
     </div>
   )
   if (error) return <p>Error: {error}</p>;
