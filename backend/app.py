@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 
 def get_db_connection():
-    conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\screenr_pub\backend\data\financial_data.db')
+    conn = sqlite3.connect(r'backend\data\financial_data.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -90,7 +90,61 @@ def get_stocks():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
+    
 
+@app.route('/api/portfolio/cash', methods=['POST'])
+def update_cash():
+    try:
+        # Get data from the request
+        data = request.json
+        amount = data.get('amount')
+        action = data.get('action')  # 'deposit' or 'withdraw'
+        
+        # Connect to the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if action == 'deposit':
+            cursor.execute('UPDATE Portfolio SET cash = cash + ? WHERE id = 1', (amount,))
+        elif action == 'withdraw':
+            cursor.execute('UPDATE Portfolio SET cash = cash - ? WHERE id = 1', (amount,))
+        
+        conn.commit()
+        conn.close()
+
+        return jsonify({'message': f'Cash {action} successful'})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/portfolio/stock', methods=['POST'])
+def update_stock():
+    try:
+        # Get data from the request
+        data = request.json
+        ticker = data.get('ticker')
+        shares = data.get('shares')
+        cost = data.get('cost')
+        date = data.get('date')
+        action = data.get('action')  # 'buy' or 'sell'
+        
+        # Connect to the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if action == 'buy':
+            cursor.execute('INSERT INTO Portfolio (ticker, shares, cost, date) VALUES (?, ?, ?, ?)', (ticker, shares, cost, date))
+        elif action == 'sell':
+            cursor.execute('DELETE FROM Portfolio WHERE ticker = ? AND shares = ? AND cost = ? AND date = ?', (ticker, shares, cost, date))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'message': f'Stock {action} successful'})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

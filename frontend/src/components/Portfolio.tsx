@@ -1,77 +1,113 @@
-import React from 'react';
+import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 
-const Portfolio: React.FC = () => {
+const Portfolio = () => {
+  const [cashAmount, setCashAmount] = useState(0);
+  const [ticker, setTicker] = useState('');
+  const [shares, setShares] = useState(0);
+  const [cost, setCost] = useState(0);
+  const [date, setDate] = useState('');
+
+  const handleCashTransaction = (action) => {
+    fetch('/api/portfolio/cash', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount: cashAmount,
+        action,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error:', error));
+  };
+
+  const handleStockTransaction = (action) => {
+    fetch('/api/portfolio/stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ticker,
+        shares,
+        cost,
+        date,
+        action,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error:', error));
+  };
+
   return (
     <div className="container">
       <div className="row justify-content-left">
-        
-        {/* Cash Input Field - Smaller Width */}
-        <div className="col-12 col-md-4 mb-3"> {/* Adjust width as needed */}
+        <div className="col-12 col-md-4 mb-3">
           <div className="input-group">
-            <span className="input-group-text bg-dark text-light" id="basic-addon1">Cash</span>
+            <span className="input-group-text bg-dark text-light">Cash</span>
             <input 
               type="number" 
               className="form-control bg-dark text-light" 
               placeholder="Amount" 
-              aria-label="Cash" 
-              aria-describedby="basic-addon1"
+              value={cashAmount} 
+              onChange={(e) => setCashAmount(e.target.value)}
             />
             <button
-              className="btn btn-outline-light rounded-start" // Square edges on the left
-              type="button"
-              id="button-addon1">Deposit</button>
+              className="btn btn-outline-light"
+              onClick={() => handleCashTransaction('deposit')}
+            >Deposit</button>
             <button
-              className="btn btn-outline-light rounded-end" // Square edges on the right
-              type="button"
-              id="button-addon2">Withdraw</button>
+              className="btn btn-outline-light"
+              onClick={() => handleCashTransaction('withdraw')}
+            >Withdraw</button>
           </div>
         </div>
-
       </div>
 
-      {/* New Row for Stock Input Fields */}
       <div className="row justify-content-left">
-        <div className="col-12 col-md-7 mb-3"> {/* Adjust width as needed */}
+        <div className="col-12 col-md-7 mb-3">
           <div className="input-group mb-2">
-            <span className="input-group-text bg-dark text-light" id="basic-addon3">Stock</span>
+            <span className="input-group-text bg-dark text-light">Stock</span>
             <input 
               type="text" 
               className="form-control bg-dark text-light" 
               placeholder="Ticker" 
-              aria-label="Ticker" 
-              aria-describedby="basic-addon3"
+              value={ticker}
+              onChange={(e) => setTicker(e.target.value)}
             />
             <input 
               type="number" 
               className="form-control bg-dark text-light" 
               placeholder="Shares" 
-              aria-label="Shares" 
-              aria-describedby="basic-addon4"
+              value={shares}
+              onChange={(e) => setShares(e.target.value)}
             />
             <input 
               type="number" 
               className="form-control bg-dark text-light" 
               placeholder="Cost" 
-              aria-label="Cost" 
-              aria-describedby="basic-addon5"
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
             />
             <input 
               type="date" 
-              className="form-control bg-dark text-light" 
-              aria-label="Date" 
-              aria-describedby="basic-addon6"
+              className="form-control bg-dark text-light"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
             />
-            {/* Add buttons without input-group, remove margin */}
             <button
-              className="btn btn-outline-light rounded-start" // Rounded edges for Buy button
-              type="button"
-              id="button-addon7">Buy</button>
+              className="btn btn-outline-light"
+              onClick={() => handleStockTransaction('buy')}
+            >Buy</button>
             <button
-              className="btn btn-outline-light rounded-end" // Rounded edges for Sell button
-              type="button"
-              id="button-addon8">Sell</button>
+              className="btn btn-outline-light"
+              onClick={() => handleStockTransaction('sell')}
+            >Sell</button>
           </div>
         </div>
       </div>
