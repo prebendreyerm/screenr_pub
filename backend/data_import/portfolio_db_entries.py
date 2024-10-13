@@ -37,3 +37,14 @@ CREATE TABLE IF NOT EXISTS StockPrices (
     FOREIGN KEY (holding_id) REFERENCES Holdings(id)
 )
 ''') 
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticker TEXT,
+    shares REAL,
+    price REAL,
+    action TEXT, -- 'buy', 'sell', 'deposit', 'withdraw'
+    date TEXT,
+    FOREIGN KEY (ticker) REFERENCES Holdings(ticker)
+)
+''')

@@ -4,6 +4,7 @@ import pandas as pd
 from analysis import scoring
 import numpy as np
 from flask_cors import CORS
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -90,32 +91,7 @@ def get_stocks():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
-    
 
-@app.route('/api/portfolio/cash', methods=['POST'])
-def update_cash():
-    try:
-        # Get data from the request
-        data = request.json
-        amount = data.get('amount')
-        action = data.get('action')  # 'deposit' or 'withdraw'
-        
-        # Connect to the database
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        if action == 'deposit':
-            cursor.execute('UPDATE Portfolio SET cash = cash + ? WHERE id = 1', (amount,))
-        elif action == 'withdraw':
-            cursor.execute('UPDATE Portfolio SET cash = cash - ? WHERE id = 1', (amount,))
-        
-        conn.commit()
-        conn.close()
-
-        return jsonify({'message': f'Cash {action} successful'})
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/portfolio/stock', methods=['POST'])
@@ -125,26 +101,153 @@ def update_stock():
         data = request.json
         ticker = data.get('ticker')
         shares = data.get('shares')
-        cost = data.get('cost')
-        date = data.get('date')
+        price = data.get('price')
         action = data.get('action')  # 'buy' or 'sell'
         
+        # Default the date to today if not provided
+        transaction_date = data.get('startDate', datetime.now().strftime('%Y-%m-%d'))
+
         # Connect to the database
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Handling 'buy' action
         if action == 'buy':
-            cursor.execute('INSERT INTO Portfolio (ticker, shares, cost, date) VALUES (?, ?, ?, ?)', (ticker, shares, cost, date))
+            cursor.execute(
+                'INSERT INTO Holdings (ticker, shares, costBasis, startDate, endDate, lastUpdate) VALUES (?, ?, ?, ?, ?, ?)',
+                (ticker, shares, price, transaction_date, transaction_date, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            )
+
+        # Handling 'sell' action
         elif action == 'sell':
-            cursor.execute('DELETE FROM Portfolio WHERE ticker = ? AND shares = ? AND cost = ? AND date = ?', (ticker, shares, cost, date))
+            # Retrieve current holdings
+            cursor.execute('SELECT shares FROM Holdings WHERE ticker = ?', (ticker,))
+            result = cursor.fetchone()
+
+            if result:
+                current_shares = result[0]
+                if current_shares >= shares:
+                    # If selling all shares, delete the row
+                    if current_shares == shares:
+                        cursor.execute('DELETE FROM Holdings WHERE ticker = ?', (ticker,))
+                    else:
+                        # Otherwise, update the shares count
+                        new_shares = current_shares - shares
+                        cursor.execute('UPDATE Holdings SET shares = ?, lastUpdate = ? WHERE ticker = ?', 
+                                       (new_shares, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), ticker))
+                else:
+                    return jsonify({'error': 'Not enough shares to sell'}), 400
+            else:
+                return jsonify({'error': 'No holdings found for this ticker'}), 400
+
+        # Log the transaction to the Transactions table
+        cursor.execute(
+            'INSERT INTO Transactions (ticker, shares, price, date, action) VALUES (?, ?, ?, ?, ?)',
+            (ticker, shares, price, transaction_date, action)
+        )
 
         conn.commit()
         conn.close()
 
         return jsonify({'message': f'Stock {action} successful'})
+    
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+
+    
+@app.route('/api/portfolio/cash', methods=['POST'])
+def update_cash():
+    try:
+        data = request.json
+        amount = data.get('amount')
+        action = data.get('action')
+
+        if action not in ['deposit', 'withdraw']:
+            return jsonify({'error': 'Invalid action'}), 400
+
+        if not isinstance(amount, (int, float)) or amount < 0:
+            return jsonify({'error': 'Invalid amount'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if action == 'deposit':
+            cursor.execute('UPDATE Portfolio SET cashAmount = cashAmount + ? WHERE id = 1', (amount,))
+        elif action == 'withdraw':
+            current_cash = cursor.execute('SELECT cashAmount FROM Portfolio WHERE id = 1').fetchone()['cashAmount']
+            if current_cash < amount:
+                return jsonify({'error': 'Insufficient funds'}), 400
+            cursor.execute('UPDATE Portfolio SET cashAmount = cashAmount - ? WHERE id = 1', (amount,))
+        
+        conn.commit()
+
+        # Fetch the updated cash amount to return it
+        updated_cash = cursor.execute('SELECT cashAmount FROM Portfolio WHERE id = 1').fetchone()['cashAmount']
+        return jsonify({'cash': updated_cash, 'message': f'Cash {action} successful'})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/portfolio/holdings', methods=['GET'])
+def get_holdings():
+    try:
+        conn = get_db_connection()
+        
+        # Fetch holdings
+        holdings = conn.execute('SELECT * FROM Holdings').fetchall()
+        holdings_list = [dict(row) for row in holdings]
+
+        # Fetch cash amount directly from the cashAmount column
+        cash = conn.execute('SELECT cashAmount FROM Portfolio WHERE id = 1').fetchone()
+        
+        # Check if cash exists before accessing it
+        cash_amount = cash['cashAmount'] if cash else 0  # Default to 0 if cash is None
+
+        conn.close()
+        
+        return jsonify({'stocks': holdings_list, 'cash': cash_amount})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/api/portfolio/transactions', methods=['GET'])
+def get_transactions():
+    try:
+        # Connect to the database
+        conn = get_db_connection()
+        
+        # Fetch all transactions from the Transactions table
+        transactions = conn.execute('SELECT * FROM Transactions').fetchall()
+        
+        # Convert the result into a list of dictionaries
+        transactions_list = [
+            {
+                'id': row[0],  # Use index if row factory is not set
+                'ticker': row[1],
+                'shares': row[2],
+                'price': row[3],
+                'date': row[4],
+                'action': row[5]
+            }
+            for row in transactions
+        ]
+
+        conn.close()
+        
+        # Return the transactions list as JSON
+        return jsonify({'transactions': transactions_list})
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 
 if __name__ == '__main__':
