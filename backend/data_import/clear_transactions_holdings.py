@@ -7,6 +7,7 @@ cursor = conn.cursor()
 
 # Clear the Transactions table
 cursor.execute('DELETE FROM Transactions')
+cursor.execute('DELETE FROM Holdings')
 
 # Commit the changes
 conn.commit()

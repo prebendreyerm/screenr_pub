@@ -1,3 +1,5 @@
+import os
+import requests
 from flask import Flask, jsonify, request
 import sqlite3
 import pandas as pd
@@ -5,14 +7,31 @@ from analysis import scoring
 import numpy as np
 from flask_cors import CORS
 from datetime import datetime
+from dotenv import load_dotenv
+
+
 
 app = Flask(__name__)
 CORS(app)
+
+load_dotenv()
+
+API_KEY = os.getenv('API_KEY')
 
 def get_db_connection():
     conn = sqlite3.connect(r'backend\data\financial_data.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+# Function to fetch historical prices
+def fetch_historical_prices(ticker):
+    url = f'https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?apikey={API_KEY}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if 'historical' in data:
+            return data['historical']
+    return []
 
 @app.route('/api/stocks/scores', methods=['GET'])
 def get_scored_stocks():
@@ -100,8 +119,8 @@ def update_stock():
         # Get data from the request
         data = request.json
         ticker = data.get('ticker')
-        shares = data.get('shares')
-        price = data.get('price')
+        shares = float(data.get('shares'))
+        price = float(data.get('price'))
         action = data.get('action')  # 'buy' or 'sell'
         
         # Default the date to today if not provided
@@ -111,30 +130,45 @@ def update_stock():
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Retrieve the current holding for the ticker, if it exists
+        cursor.execute('SELECT shares, costBasis FROM Holdings WHERE ticker = ?', (ticker,))
+        holding = cursor.fetchone()
+
         # Handling 'buy' action
         if action == 'buy':
-            cursor.execute(
-                'INSERT INTO Holdings (ticker, shares, costBasis, startDate, endDate, lastUpdate) VALUES (?, ?, ?, ?, ?, ?)',
-                (ticker, shares, price, transaction_date, transaction_date, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            )
+            if holding:
+                # Update the existing holding: new shares and new cost basis
+                current_shares, current_cost_basis = holding
+                total_shares = current_shares + shares
+                total_cost = (current_cost_basis * current_shares) + (price * shares)
+                new_cost_basis = total_cost / total_shares
+
+                cursor.execute(
+                    'UPDATE Holdings SET shares = ?, costBasis = ?, lastUpdate = ? WHERE ticker = ?',
+                    (total_shares, new_cost_basis, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), ticker)
+                )
+            else:
+                # Insert a new holding
+                cursor.execute(
+                    'INSERT INTO Holdings (ticker, shares, costBasis, startDate, endDate, lastUpdate) VALUES (?, ?, ?, ?, ?, ?)',
+                    (ticker, shares, price, transaction_date, transaction_date, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                )
 
         # Handling 'sell' action
         elif action == 'sell':
-            # Retrieve current holdings
-            cursor.execute('SELECT shares FROM Holdings WHERE ticker = ?', (ticker,))
-            result = cursor.fetchone()
-
-            if result:
-                current_shares = result[0]
+            if holding:
+                current_shares, current_cost_basis = holding
                 if current_shares >= shares:
-                    # If selling all shares, delete the row
+                    # If selling all shares, delete the holding
                     if current_shares == shares:
                         cursor.execute('DELETE FROM Holdings WHERE ticker = ?', (ticker,))
                     else:
-                        # Otherwise, update the shares count
+                        # Otherwise, reduce the shares count
                         new_shares = current_shares - shares
-                        cursor.execute('UPDATE Holdings SET shares = ?, lastUpdate = ? WHERE ticker = ?', 
-                                       (new_shares, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), ticker))
+                        cursor.execute(
+                            'UPDATE Holdings SET shares = ?, lastUpdate = ? WHERE ticker = ?',
+                            (new_shares, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), ticker)
+                        )
                 else:
                     return jsonify({'error': 'Not enough shares to sell'}), 400
             else:
@@ -154,6 +188,7 @@ def update_stock():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 
 
