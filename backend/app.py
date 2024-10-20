@@ -33,6 +33,59 @@ def fetch_historical_prices(ticker):
             return data['historical']
     return []
 
+# Function to fetch historical currency conversion rates
+def fetch_historical_currency_rates(currency_pair, start_date, end_date):
+    url = f'https://financialmodelingprep.com/api/v3/historical-full/{currency_pair}?from={start_date}&to={end_date}&apikey={API_KEY}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        return data  # Assuming data is a list of exchange rates
+    return []
+
+@app.route('/api/stocks/prices', methods=['POST'])
+def get_stock_prices():
+    try:
+        # Get data from the request body
+        data = request.json
+        ticker = data.get('ticker')
+        start_date = data.get('startDate')
+        end_date = data.get('endDate')
+
+        historical_prices = fetch_historical_prices(ticker)
+
+        if start_date and end_date:
+            filtered_prices = [
+                price for price in historical_prices
+                if datetime.fromisoformat(price['date']) >= datetime.strptime(start_date, '%Y-%m-%d') and
+                datetime.fromisoformat(price['date']) <= datetime.strptime(end_date, '%Y-%m-%d')
+            ]
+        else:
+            filtered_prices = historical_prices
+
+        # Check if the ticker ends with '.OL' or '.ST' for currency conversion
+        if ticker.endswith('.OL'):
+            currency_rates = fetch_historical_currency_rates('NOKUSD', start_date, end_date)
+        elif ticker.endswith('.ST'):
+            currency_rates = fetch_historical_currency_rates('SEKUSD', start_date, end_date)
+        else:
+            currency_rates = []
+
+        # Create a dictionary for currency rates for easy lookup
+        currency_dict = {rate['date']: rate['close'] for rate in currency_rates}  # Assuming 'close' is the conversion rate
+
+        # Adjust prices based on currency conversion
+        for price in filtered_prices:
+            if ticker.endswith('.OL') or ticker.endswith('.ST'):
+                conversion_rate = currency_dict.get(price['date'])
+                if conversion_rate:
+                    price['close'] *= conversion_rate  # Adjust the price to USD
+
+        return jsonify(filtered_prices)
+
+    except Exception as e:
+        print(f"Error fetching stock prices:", e)
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/stocks/scores', methods=['GET'])
 def get_scored_stocks():
     try:

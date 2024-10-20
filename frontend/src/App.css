@@ -92,3 +92,17 @@ html, body {
   color: #e0e0e0; /* Ensure it's a light gray */
   opacity: 1; /* Remove default opacity */
 }
+
+html, body, #root {
+  height: 100%;  /* Ensure the root div occupies full height */
+  margin: 0;  /* Remove default margin */
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;  /* Allow full height */
+  padding: 20px;  /* Optional: some padding */
+}

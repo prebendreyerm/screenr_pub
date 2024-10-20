@@ -5,61 +5,138 @@ import axios from 'axios';
 // Define the StockData interface
 interface StockData {
   date: string;
-  close: number; // Only need the close price for the chart
+  close: number;
 }
 
-// Define the Holdings interface
-interface Holding {
-  ticker: string;
+interface Transaction {
+  action: string; // This appears to be a date; you might want to change the name for clarity
+  date: string;
+  id: number;
+  price: number; // Already in USD
   shares: number;
+  ticker: string;
 }
 
 const Chart: React.FC = () => {
   const [chartData, setChartData] = useState<StockData[]>([]);
-  const [holdings, setHoldings] = useState<Holding[]>([]);
 
   useEffect(() => {
-    const fetchHoldings = async () => {
+    const fetchStockPrices = async (startDate: string, endDate: string) => {
       try {
-        const response = await axios.get('/api/portfolio/holdings'); // Fetch holdings
-        const holdingsData = response.data.stocks; // Extract the stocks array
-        setHoldings(holdingsData);
-
-        // Now fetch historical prices for each holding
-        const historicalPromises = holdingsData.map(async (holding: Holding) => {
-          const pricesResponse = await axios.get(`https://financialmodelingprep.com/api/v3/historical-price-full/${holding.ticker}?apikey=YOUR_API_KEY`);
-          return pricesResponse.data.historical.map((data: any) => ({
-            date: data.date,
-            close: data.close,
-          }));
+        const response = await axios.post('http://localhost:5000/api/stocks/prices', {
+          ticker: 'EQNR.OL',
+          startDate: startDate,
+          endDate: endDate,
         });
-
-        // Resolve all historical price promises
-        const historicalDataArrays = await Promise.all(historicalPromises);
-        
-        // Flatten the array and merge with shares data (if needed)
-        const combinedData = historicalDataArrays.flat();
-        setChartData(combinedData);
-        
+        return response.data; // This should be your full response array
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching stock prices:', error);
+        return [];
       }
     };
 
-    fetchHoldings();
+    const fetchTransactions = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:5000/api/portfolio/transactions');
+        return response.data.transactions;
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        return [];
+      }
+    };
+
+    const calculateCumulativePositions = (transactions: Transaction[]) => {
+      const positions: { date: string; totalShares: number; totalCost: number }[] = [];
+      const sharesByDate: { [key: string]: { totalShares: number; totalCost: number } } = {};
+
+      transactions.forEach((transaction) => {
+        const { date, shares, price } = transaction;
+        const totalCost = shares * price;
+
+        if (!sharesByDate[date]) {
+          sharesByDate[date] = { totalShares: 0, totalCost: 0 };
+        }
+
+        sharesByDate[date].totalShares += shares;
+        sharesByDate[date].totalCost += totalCost;
+      });
+
+      Object.keys(sharesByDate).forEach((date) => {
+        positions.push({
+          date,
+          totalShares: sharesByDate[date].totalShares,
+          totalCost: sharesByDate[date].totalCost,
+        });
+      });
+
+      return positions;
+    };
+
+    const fetchCurrencyConversionRate = async () => {
+      // Replace this with the actual endpoint or logic to fetch the conversion rate
+      try {
+        const response = await axios.get('http://localhost:5000/api/currency/conversion-rate');
+        return response.data.rate; // Assuming the API returns an object with a 'rate' property
+      } catch (error) {
+        console.error('Error fetching currency conversion rate:', error);
+        return 1; // Default to 1 if there's an error (no conversion)
+      }
+    };
+
+    const mergeStockDataWithTransactions = (stockData: StockData[], positions: { date: string; totalShares: number; totalCost: number }[], conversionRate: number) => {
+      return stockData.map((stock) => {
+        const positionOnDate = positions.find((pos) => pos.date === stock.date);
+        return {
+          date: stock.date,
+          // Convert stock close price to USD if it's not already (assuming it's in local currency)
+          close: positionOnDate && positionOnDate.totalShares > 0
+            ? (positionOnDate.totalCost / positionOnDate.totalShares)
+            : stock.close * conversionRate, // Convert to USD using the conversion rate
+        };
+      });
+    };
+
+    const startDate = '2024-01-01';
+    const endDate = '2024-10-18';
+
+    const fetchData = async () => {
+      const stockData = await fetchStockPrices(startDate, endDate);
+      const transactions = await fetchTransactions();
+      const positions = calculateCumulativePositions(transactions);
+
+      // Sort the stockData and positions by date in ascending order
+      const sortedStockData = stockData.sort((a: StockData, b: StockData) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const sortedPositions = positions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      const conversionRate = await fetchCurrencyConversionRate(); // Fetch the conversion rate
+      const mergedData = mergeStockDataWithTransactions(sortedStockData, sortedPositions, conversionRate); // Pass the conversion rate
+      setChartData(mergedData);
+    };
+
+    fetchData();
   }, []);
 
   return (
     <div className="chart-container">
-      <h1>Stock Price Chart</h1>
-      <LineChart width={600} height={300} data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="close" stroke="#8884d8" />
-      </LineChart>
+      <h1>EQNR.OL Stock Price Development</h1>
+
+      {/* Render the chart */}
+      {chartData.length === 0 ? (
+        <p>No data to display</p>
+      ) : (
+        <LineChart
+          width={window.innerWidth * 0.95}  // Full width of the window
+          height={window.innerHeight * 0.8} // 80% of the window height
+          data={chartData}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="close" stroke="#8884d8" dot={false} />
+        </LineChart>
+      )}
     </div>
   );
 };
