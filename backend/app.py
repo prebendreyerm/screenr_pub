@@ -35,12 +35,34 @@ def fetch_historical_prices(ticker):
 
 # Function to fetch historical currency conversion rates
 def fetch_historical_currency_rates(currency_pair, start_date, end_date):
-    url = f'https://financialmodelingprep.com/api/v3/historical-full/{currency_pair}?from={start_date}&to={end_date}&apikey={API_KEY}'
+    url = f'https://financialmodelingprep.com/api/v3/historical-price-full/{currency_pair}?from={start_date}&to={end_date}&apikey={API_KEY}'
     response = requests.get(url)
+
     if response.status_code == 200:
         data = response.json()
-        return data  # Assuming data is a list of exchange rates
+        return data.get('historical', [])  # Adjust as necessary based on the actual structure
     return []
+
+
+
+@app.route('/api/currency/conversion-rate', methods=['GET'])
+def get_conversion_rate():
+    try:
+        # Get the currency pair from query parameters (e.g., NOKUSD or SEKUSD)
+        currency_pair = request.args.get('pair')
+        if not currency_pair:
+            return jsonify({'error': 'Currency pair is required'}), 400
+
+        # Fetch historical currency rates for the pair
+        start_date = request.args.get('startDate')
+        end_date = request.args.get('endDate')
+        rates = fetch_historical_currency_rates(currency_pair, start_date, end_date)
+
+        return jsonify({'rates': rates})
+    
+    except Exception as e:
+        print(f"Error fetching conversion rates:", e)
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/stocks/prices', methods=['POST'])
 def get_stock_prices():

@@ -5,20 +5,21 @@ import axios from 'axios';
 // Define the StockData interface
 interface StockData {
   date: string;
-  close: number;
+  close: number; // Close price in local currency (NOK)
 }
 
+// Define the Transaction interface
 interface Transaction {
-  action: string; // This appears to be a date; you might want to change the name for clarity
+  action: string;
   date: string;
-  id: number;
-  price: number; // Already in USD
   shares: number;
+  price: number;
   ticker: string;
 }
 
 const Chart: React.FC = () => {
   const [chartData, setChartData] = useState<StockData[]>([]);
+  const [totalHoldings, setTotalHoldings] = useState<any[]>([]); // State for total holdings values
 
   useEffect(() => {
     const fetchStockPrices = async (startDate: string, endDate: string) => {
@@ -28,6 +29,7 @@ const Chart: React.FC = () => {
           startDate: startDate,
           endDate: endDate,
         });
+        console.log('Stock Data:', response.data); // Log stock data
         return response.data; // This should be your full response array
       } catch (error) {
         console.error('Error fetching stock prices:', error);
@@ -37,80 +39,50 @@ const Chart: React.FC = () => {
 
     const fetchTransactions = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/api/portfolio/transactions');
-        return response.data.transactions;
+        const response = await axios.get('http://localhost:5000/api/portfolio/transactions');
+        console.log('Transactions Data:', response.data); // Log transactions data
+        return response.data.transactions; // Assuming the response has a 'transactions' property
       } catch (error) {
         console.error('Error fetching transactions:', error);
         return [];
       }
     };
 
-    const calculateCumulativePositions = (transactions: Transaction[]) => {
-      const positions: { date: string; totalShares: number; totalCost: number }[] = [];
-      const sharesByDate: { [key: string]: { totalShares: number; totalCost: number } } = {};
+    const fetchData = async () => {
+      const startDate = '2022-09-19'; // Start date to align with the earliest transaction
+      const endDate = '2024-10-18';
 
-      transactions.forEach((transaction) => {
-        const { date, shares, price } = transaction;
-        const totalCost = shares * price;
+      const stockData = await fetchStockPrices(startDate, endDate);
+      const transactions = await fetchTransactions();
 
-        if (!sharesByDate[date]) {
-          sharesByDate[date] = { totalShares: 0, totalCost: 0 };
-        }
+      // Initialize holdings for EQNR.OL
+      let totalShares = 0;
+      const totalHoldingsValues: any[] = [];
 
-        sharesByDate[date].totalShares += shares;
-        sharesByDate[date].totalCost += totalCost;
-      });
+      // Iterate over the stock data
+      stockData.forEach(stock => {
+        // Calculate total shares for EQNR.OL based on transactions
+        transactions.forEach(transaction => {
+          if (transaction.ticker === 'EQNR.OL' && transaction.action === 'buy' && new Date(transaction.date) <= new Date(stock.date)) {
+            totalShares += transaction.shares; // Add shares for buy transactions
+          }
+        });
 
-      Object.keys(sharesByDate).forEach((date) => {
-        positions.push({
-          date,
-          totalShares: sharesByDate[date].totalShares,
-          totalCost: sharesByDate[date].totalCost,
+        // Calculate total value of holdings on the current stock date
+        const totalValue = totalShares * stock.close; // Total value in local currency
+        totalHoldingsValues.push({
+          date: stock.date,
+          totalValue,
         });
       });
 
-      return positions;
-    };
+      // Sort total holdings values by date to ensure they match stock data
+      totalHoldingsValues.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const fetchCurrencyConversionRate = async () => {
-      // Replace this with the actual endpoint or logic to fetch the conversion rate
-      try {
-        const response = await axios.get('http://localhost:5000/api/currency/conversion-rate');
-        return response.data.rate; // Assuming the API returns an object with a 'rate' property
-      } catch (error) {
-        console.error('Error fetching currency conversion rate:', error);
-        return 1; // Default to 1 if there's an error (no conversion)
-      }
-    };
+      console.log('Total Holdings Values:', totalHoldingsValues); // Log total holdings values
 
-    const mergeStockDataWithTransactions = (stockData: StockData[], positions: { date: string; totalShares: number; totalCost: number }[], conversionRate: number) => {
-      return stockData.map((stock) => {
-        const positionOnDate = positions.find((pos) => pos.date === stock.date);
-        return {
-          date: stock.date,
-          // Convert stock close price to USD if it's not already (assuming it's in local currency)
-          close: positionOnDate && positionOnDate.totalShares > 0
-            ? (positionOnDate.totalCost / positionOnDate.totalShares)
-            : stock.close * conversionRate, // Convert to USD using the conversion rate
-        };
-      });
-    };
-
-    const startDate = '2024-01-01';
-    const endDate = '2024-10-18';
-
-    const fetchData = async () => {
-      const stockData = await fetchStockPrices(startDate, endDate);
-      const transactions = await fetchTransactions();
-      const positions = calculateCumulativePositions(transactions);
-
-      // Sort the stockData and positions by date in ascending order
-      const sortedStockData = stockData.sort((a: StockData, b: StockData) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      const sortedPositions = positions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      const conversionRate = await fetchCurrencyConversionRate(); // Fetch the conversion rate
-      const mergedData = mergeStockDataWithTransactions(sortedStockData, sortedPositions, conversionRate); // Pass the conversion rate
-      setChartData(mergedData);
+      setTotalHoldings(totalHoldingsValues); // Save total holdings to state
+      setChartData(stockData); // Set stock data for the chart
     };
 
     fetchData();
@@ -121,20 +93,20 @@ const Chart: React.FC = () => {
       <h1>EQNR.OL Stock Price Development</h1>
 
       {/* Render the chart */}
-      {chartData.length === 0 ? (
+      {chartData.length === 0 || totalHoldings.length === 0 ? (
         <p>No data to display</p>
       ) : (
         <LineChart
           width={window.innerWidth * 0.95}  // Full width of the window
           height={window.innerHeight * 0.8} // 80% of the window height
-          data={chartData}
+          data={totalHoldings} // Use total holdings for the chart
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" />
           <YAxis />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="close" stroke="#8884d8" dot={false} />
+          <Line type="monotone" dataKey="totalValue" stroke="#8884d8" dot={false} />
         </LineChart>
       )}
     </div>
