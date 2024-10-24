@@ -46,7 +46,7 @@ def update_ratiosQuarter():
 def update_keyMetricsTTM():
     tickers = fmp.get_all_tickers()
     table = 'KeyMetricsTTM'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/key-metrics-TTM/{ticker}?apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -54,7 +54,7 @@ def update_keyMetricsTTM():
 def update_ratiosTTM():
     tickers = fmp.get_all_tickers()
     table = 'RatiosTTM'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/ratios-TTM/{ticker}?apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -77,3 +77,23 @@ def update_FinancialGrowthQuarter():
         url = f'https://financialmodelingprep.com/api/v3/FinancialGrowth/{ticker}?period=Quarter&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
 
+def update_Prices():
+    # Get all the tickers
+    tickers = fmp.get_all_tickers()
+    
+    # Split the tickers into smaller batches if needed (FMP has a limit of 100 symbols per request)
+    batch_size = 100
+    ticker_batches = [tickers[i:i + batch_size] for i in range(0, len(tickers), batch_size)]
+    
+    table = 'Prices'
+    
+    for batch in tqdm(ticker_batches):
+        # Join the tickers into a single comma-separated string for the URL
+        ticker_string = ','.join(batch)
+        url = f'https://financialmodelingprep.com/api/v3/quote/{ticker_string}?apikey={api_key}'
+        
+        # Fetch and insert data for the batch
+        fmp.fetch_and_insert_data(url, table)
+
+if __name__ == '__main__':
+    update_Prices()
