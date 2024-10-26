@@ -95,6 +95,16 @@ def clear_table(table_name):
     conn.commit()
     conn.close()
 
+def delete_table(table_name):
+    '''Function to delete an existing table from the database.'''
+    conn = sqlite3.connect(r'backend\data\financial_data.db')
+    cursor = conn.cursor()
+
+    # Delete the table
+    cursor.execute(f'DROP TABLE IF EXISTS {table_name}')
+    conn.commit()
+    conn.close()
+
 
 
 if __name__ == '__main__':

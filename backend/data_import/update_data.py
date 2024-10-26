@@ -12,7 +12,7 @@ api_key = os.getenv('API_KEY')
 def update_keyMetricsAnnual():
     tickers = fmp.get_all_tickers()
     table = 'KeyMetricsAnnual'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?period=annual&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -21,15 +21,15 @@ def update_keyMetricsAnnual():
 def update_keyMetricsQuarter():
     tickers = fmp.get_all_tickers()
     table = 'KeyMetricsQuarter'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
-        url = f'https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?period=Quarter&apikey={api_key}'
+        url = f'https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?period=quarter&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
 
 def update_ratiosAnnual():
     tickers = fmp.get_all_tickers()
     table = 'RatiosAnnual'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/ratios/{ticker}?period=annual&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -38,9 +38,9 @@ def update_ratiosAnnual():
 def update_ratiosQuarter():
     tickers = fmp.get_all_tickers()
     table = 'RatiosQuarter'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
-        url = f'https://financialmodelingprep.com/api/v3/ratios/{ticker}?period=Quarter&apikey={api_key}'
+        url = f'https://financialmodelingprep.com/api/v3/ratios/{ticker}?period=quarter&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
 
 def update_keyMetricsTTM():
@@ -63,18 +63,18 @@ def update_ratiosTTM():
 def update_FinancialGrowthAnnual():
     tickers = fmp.get_all_tickers()
     table = 'FinancialGrowthAnnual'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
-        url = f'https://financialmodelingprep.com/api/v3/ratios/{ticker}?period=annual&apikey={api_key}'
+        url = f'https://financialmodelingprep.com/api/v3/financial-growth/{ticker}?period=annual&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
 
 
 def update_FinancialGrowthQuarter():
     tickers = fmp.get_all_tickers()
     table = 'FinancialGrowthQuarter'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
-        url = f'https://financialmodelingprep.com/api/v3/FinancialGrowth/{ticker}?period=Quarter&apikey={api_key}'
+        url = f'https://financialmodelingprep.com/api/v3/financial-growth/{ticker}?period=Quarter&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
 
 def update_Prices():
@@ -94,6 +94,31 @@ def update_Prices():
         
         # Fetch and insert data for the batch
         fmp.fetch_and_insert_data(url, table)
+def update_HistoricalPricesAnnual():
+    tickers = fmp.get_all_tickers()
+    table = 'HistoricalPricesAnnual'
+    # fmp.clear_table(table)
+    for ticker in tqdm(tickers):
+        url = f'https://financialmodelingprep.com/api/v3/enterprise-values/{ticker}/?period=annual&apikey={api_key}'
+        fmp.fetch_and_update_data(url,table,ticker)
+
+
+def update_HistoricalPricesQuarter():
+    tickers = fmp.get_all_tickers()
+    table = 'HistoricalPricesQuarter'
+    # fmp.clear_table(table)
+    for ticker in tqdm(tickers):
+        url = f'https://financialmodelingprep.com/api/v3/enterprise-values/{ticker}/?period=quarter&apikey={api_key}'
+        fmp.fetch_and_update_data(url,table,ticker)
+
+
 
 if __name__ == '__main__':
+    update_FinancialGrowthAnnual()
+    update_FinancialGrowthQuarter()
+    update_keyMetricsAnnual()
+    update_keyMetricsTTM()
+    update_ratiosAnnual()
+    update_ratiosQuarter()
+    update_ratiosTTM()
     update_Prices()
