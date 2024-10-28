@@ -1,6 +1,12 @@
 import sqlite3
 import pandas as pd
+import requests
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+
+api_key = os.getenv('API_KEY')
 # pd.set_option('display.max_rows', None)
 
 def get_db_connection():
@@ -37,7 +43,9 @@ def get_table(table):
     return df
 
 
-list_tables()
+df = get_table('HistoricalPricesQuarter')
+print(df)
+
 # df_prices = get_table('Prices')
 # df_ratios = get_table('RatiosTTM')
 
