@@ -3,6 +3,7 @@ import requests
 import fmp
 from dotenv import load_dotenv
 from tqdm import tqdm
+from multiprocessing import Process
 
 load_dotenv()
 
@@ -21,7 +22,7 @@ def update_keyMetricsAnnual():
 def update_keyMetricsQuarter():
     tickers = fmp.get_all_tickers()
     table = 'KeyMetricsQuarter'
-    # fmp.clear_table(table)
+    fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?period=quarter&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -63,7 +64,7 @@ def update_ratiosTTM():
 def update_FinancialGrowthAnnual():
     tickers = fmp.get_all_tickers()
     table = 'FinancialGrowthAnnual'
-    # fmp.clear_table(table)
+    fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/financial-growth/{ticker}?period=annual&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -97,7 +98,7 @@ def update_Prices():
 def update_HistoricalPricesAnnual():
     tickers = fmp.get_all_tickers()
     table = 'HistoricalPricesAnnual'
-    # fmp.clear_table(table)
+    fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/enterprise-values/{ticker}/?period=annual&apikey={api_key}'
         fmp.fetch_and_update_data(url,table,ticker)
@@ -106,15 +107,37 @@ def update_HistoricalPricesAnnual():
 def update_HistoricalPricesQuarter():
     tickers = fmp.get_all_tickers()
     table = 'HistoricalPricesQuarter'
-    # fmp.clear_table(table)
+    fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/enterprise-values/{ticker}/?period=quarter&apikey={api_key}'
         fmp.fetch_and_update_data(url,table,ticker)
 
 
-
-if __name__ == '__main__':
-    # update_ratiosQuarter()
+def process_one():
+    update_ratiosQuarter()
+    update_ratiosAnnual()
     update_keyMetricsQuarter()
+    update_keyMetricsAnnual()
+
+def process_two():
+    update_ratiosTTM()
+    update_keyMetricsTTM()
     update_HistoricalPricesAnnual()
     update_HistoricalPricesQuarter()
+    update_Prices()
+
+
+if __name__ == '__main__':
+    # Create processes
+    p1 = Process(target=process_one)
+    p2 = Process(target=process_two)
+
+    # Start processes
+    p1.start()
+    p2.start()
+
+    # Wait for both processes to complete
+    p1.join()
+    p2.join()
+
+    print("All updates completed.")

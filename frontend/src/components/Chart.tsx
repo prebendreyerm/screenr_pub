@@ -55,25 +55,38 @@ const Chart: React.FC = () => {
       const stockData = await fetchStockPrices(startDate, endDate);
       const transactions = await fetchTransactions();
 
+      // Sort transactions by date to apply them in the correct order
+      transactions.sort((a: Transaction, b: Transaction) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
       // Initialize holdings for EQNR.OL
       let totalShares = 0;
+      let firstBuyFound = false;
       const totalHoldingsValues: any[] = [];
 
       // Iterate over the stock data
       stockData.forEach(stock => {
-        // Calculate total shares for EQNR.OL based on transactions
+        // For each stock date, apply transactions that occurred before or on that date
         transactions.forEach(transaction => {
-          if (transaction.ticker === 'EQNR.OL' && transaction.action === 'buy' && new Date(transaction.date) <= new Date(stock.date)) {
-            totalShares += transaction.shares; // Add shares for buy transactions
+          if (transaction.ticker === 'EQNR.OL' && new Date(transaction.date) <= new Date(stock.date)) {
+            if (transaction.action === 'buy') {
+              totalShares += transaction.shares;
+              firstBuyFound = true;
+            }
+            if (transaction.action === 'sell') {
+              totalShares -= transaction.shares; // Deduct shares on sell action
+            }
           }
         });
 
-        // Calculate total value of holdings on the current stock date
-        const totalValue = totalShares * stock.close; // Total value in local currency
-        totalHoldingsValues.push({
-          date: stock.date,
-          totalValue,
-        });
+        // Calculate total value of holdings on the current stock date, but only if the first buy has occurred
+        const totalValue = totalShares * stock.close;
+          totalHoldingsValues.push({
+            date: stock.date,
+            totalValue,
+          });
+
+        // Reset firstBuyFound for the next day
+        firstBuyFound = false;
       });
 
       // Sort total holdings values by date to ensure they match stock data
@@ -97,7 +110,7 @@ const Chart: React.FC = () => {
         <p>No data to display</p>
       ) : (
         <LineChart
-          width={window.innerWidth * 0.95}  // Full width of the window
+          width={window.innerWidth * 0.95}  // Full width of the window
           height={window.innerHeight * 0.8} // 80% of the window height
           data={totalHoldings} // Use total holdings for the chart
         >
