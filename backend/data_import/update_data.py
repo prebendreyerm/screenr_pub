@@ -114,16 +114,17 @@ def update_HistoricalPricesQuarter():
 
 
 def process_one():
-    update_ratiosQuarter()
-    update_ratiosAnnual()
-    update_keyMetricsQuarter()
-    update_keyMetricsAnnual()
+    # update_ratiosQuarter()
+    # update_ratiosAnnual()
+    # update_keyMetricsQuarter()
+    update_ratiosTTM()
+    
 
 def process_two():
-    update_ratiosTTM()
+    # update_keyMetricsAnnual()
+    # update_HistoricalPricesAnnual()
+    # update_HistoricalPricesQuarter()
     update_keyMetricsTTM()
-    update_HistoricalPricesAnnual()
-    update_HistoricalPricesQuarter()
     update_Prices()
 
 

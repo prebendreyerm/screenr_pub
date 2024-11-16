@@ -43,7 +43,7 @@ def get_table(table):
     return df
 
 
-df = get_table('HistoricalPricesQuarter')
+df = get_table('ScoringStrategies')
 print(df)
 
 # df_prices = get_table('Prices')
