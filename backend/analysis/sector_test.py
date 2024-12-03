@@ -8,7 +8,7 @@ conn = sqlite3.connect('stock_data_full.db')
 # Function to fetch data as DataFrame
 def fetch_data_as_dataframe(query):
     try:
-        with sqlite3.connect('stock_data_full.db') as conn:
+        with sqlite3.connect(r'backend\data\financial_data.db') as conn:
             df = pd.read_sql_query(query, conn)
             return df
     except sqlite3.Error as e:
@@ -16,7 +16,7 @@ def fetch_data_as_dataframe(query):
         return None
 
 # Fetch data into a DataFrame
-query = "SELECT * FROM stock_data"
+query = "SELECT * FROM RatiosTTM"
 df = fetch_data_as_dataframe(query)
 
 # Drop rows with NaN values

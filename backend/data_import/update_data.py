@@ -64,7 +64,7 @@ def update_ratiosTTM():
 def update_FinancialGrowthAnnual():
     tickers = fmp.get_all_tickers()
     table = 'FinancialGrowthAnnual'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/financial-growth/{ticker}?period=annual&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -73,7 +73,7 @@ def update_FinancialGrowthAnnual():
 def update_FinancialGrowthQuarter():
     tickers = fmp.get_all_tickers()
     table = 'FinancialGrowthQuarter'
-    fmp.clear_table(table)
+    # fmp.clear_table(table)
     for ticker in tqdm(tickers):
         url = f'https://financialmodelingprep.com/api/v3/financial-growth/{ticker}?period=Quarter&apikey={api_key}'
         fmp.fetch_and_update_data(url, table, ticker)
@@ -113,32 +113,36 @@ def update_HistoricalPricesQuarter():
         fmp.fetch_and_update_data(url,table,ticker)
 
 
-def process_one():
-    # update_ratiosQuarter()
-    # update_ratiosAnnual()
-    # update_keyMetricsQuarter()
-    update_ratiosTTM()
+# def process_one():
+#     # update_ratiosQuarter()
+#     # update_ratiosAnnual()
+#     # update_keyMetricsQuarter()
+#     # update_FinancialGrowthQuarter()
+#     # update_ratiosTTM()
     
 
-def process_two():
-    # update_keyMetricsAnnual()
-    # update_HistoricalPricesAnnual()
-    # update_HistoricalPricesQuarter()
-    update_keyMetricsTTM()
-    update_Prices()
+# def process_two():
+#     # update_keyMetricsAnnual()
+#     # update_HistoricalPricesAnnual()
+#     # update_HistoricalPricesQuarter()
+#     # update_FinancialGrowthAnnual()
+#     # update_keyMetricsTTM()
+#     # update_Prices()
 
 
 if __name__ == '__main__':
-    # Create processes
-    p1 = Process(target=process_one)
-    p2 = Process(target=process_two)
+    # # Create processes
+    # p1 = Process(target=process_one)
+    # p2 = Process(target=process_two)
 
-    # Start processes
-    p1.start()
-    p2.start()
+    # # Start processes
+    # p1.start()
+    # p2.start()
 
-    # Wait for both processes to complete
-    p1.join()
-    p2.join()
+    # # Wait for both processes to complete
+    # p1.join()
+    # p2.join()
 
-    print("All updates completed.")
+    # print("All updates completed.")
+
+    update_FinancialGrowthAnnual()

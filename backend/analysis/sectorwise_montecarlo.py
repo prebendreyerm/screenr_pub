@@ -6,12 +6,12 @@ import numpy as np
 from tqdm import tqdm
 
 # Connect to the SQLite database
-conn = sqlite3.connect('stock_data_full.db')
+conn = sqlite3.connect(r'backend\data\financial_data.db')
 
 # Function to fetch data as DataFrame
 def fetch_data_as_dataframe(query):
     try:
-        with sqlite3.connect('stock_data_full.db') as conn:
+        with sqlite3.connect(r'backend\data\financial_data.db') as conn:
             df = pd.read_sql_query(query, conn)
             return df
     except sqlite3.Error as e:
@@ -31,8 +31,40 @@ def clean_data(df):
 
 # Ensure the DataFrame is sorted by ticker and year
 def sort_data(df):
-    df = df.sort_values(by=['year', 'ticker'])
+    df = df.sort_values(by=['calendarYear', 'symbol'])
     return df
+
+def combined_df():
+    # Read all dataframes
+    df_assets = pd.read_sql_query('SELECT * FROM Assets', conn)
+    df_ratios = pd.read_sql_query('SELECT * FROM RatiosAnnual', conn)
+    df_keyMetrics = pd.read_sql_query('SELECT * FROM KeyMetricsAnnual', conn)
+    df_financial = pd.read_sql_query('SELECT * FROM FinancialGrowthAnnual', conn)
+    df_prices = pd.read_sql_query('SELECT * FROM HistoricalPricesAnnual', conn)
+
+    # Merge all dataframes
+    df = pd.merge(df_ratios, df_keyMetrics, on=['symbol', 'date'], how='inner')
+    df = pd.merge(df, df_financial, on=['symbol', 'date'], how='inner')
+    df = pd.merge(df, df_prices, on=['symbol', 'date'], how='inner')
+
+    # Add 'name', 'industry', and 'sector' from df_assets
+    df = pd.merge(df, df_assets[['symbol', 'name', 'industry', 'sector']], on='symbol', how='left')
+
+    # Remove columns with underscores in their names
+    df = df.loc[:, ~df.columns.str.contains('_')]
+
+    return df
+
+
+# Merging the database tables into a single table
+df = combined_df()
+
+# Selecting the sector to analyze
+# df = df[df['sector'] == 'Technology']
+
+df = clean_data(df)
+df = sort_data(df)
+
 
 # Define the columns that can be used for scoring
 scoring_columns = [
@@ -121,14 +153,8 @@ initial_strategies = {
     'Strategy 4': ['enterpriseValueMultiple', 'returnOnAssets', 'revenue_growth', 'debtRatio', 'freeCashFlowPerShare']
 }
 
-# Calculate scores and backtest for the initial strategies within a specific sector (e.g., 'Technology')
-sector = 'Telecommunications'
-df_sector = fetch_sector_data(sector)
-df_sector = clean_data(df_sector)
-df_sector = sort_data(df_sector)
-
 for strategy_name, columns in initial_strategies.items():
-    investment_results, total_value, overall_return_pct, strategy_columns = calculate_scores_and_backtest(df_sector, columns, [True] + [False] * (len(columns) - 1))
+    investment_results, total_value, overall_return_pct, strategy_columns = calculate_scores_and_backtest(df, columns, [True] + [False] * (len(columns) - 1))
     strategy_results[strategy_name] = (investment_results, total_value, overall_return_pct, strategy_columns)
 
 # Function to compare strategies with baseline and potentially update baseline
