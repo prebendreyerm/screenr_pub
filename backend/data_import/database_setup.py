@@ -2,7 +2,7 @@ import sqlite3
 import pandas as pd
 
 # Connect to SQLite database (or create it if it doesn't exist)
-conn = sqlite3.connect(r'C:\Users\Preben\OneDrive\Dokumenter\GitHub\Screenr\data\financial_data.db')
+conn = sqlite3.connect(r'backend\data\financial_data.db')
 cursor = conn.cursor()
 
 # Create Assets table
@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS Assets (
     sector TEXT
 )
 ''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS ScoringStrategies (
+    strategy_name TEXT PRIMARY KEY,
+    columns_used TEXT,
+    ranking_direction TEXT,
+    sector TEXT,
+    overall_return REAL,
+    std_dev REAL
+)
+''')
+
 
 # Create AnnualRatios table
 cursor.execute('''
@@ -217,6 +229,8 @@ CREATE TABLE IF NOT EXISTS KeyMetricsTTM (
     debtToMarketCapTTM REAL
 )
 ''')
+
+
 
 # Commit changes and close the connection
 conn.commit()

@@ -43,31 +43,26 @@ def get_table(table):
     return df
 
 
-def delete_tables():
+def delete_tables(table_name):
     # Path to the database
     db_path = "backend/data/financial_data.db"
-
-    # Tables to delete
-    tables_to_delete = [
-        "QuarterlyRatios",
-        "AnnualRatios",
-    ]
 
     # Connect to the database
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
 
-    # Drop tables
-    for table in tables_to_delete:
-        cursor.execute(f"DROP TABLE IF EXISTS {table};")
-        print(f"Table {table} deleted (if it existed).")
+    # Drop the table
+    cursor.execute(f"DROP TABLE IF EXISTS {table_name};")
+    print(f"Table {table_name} deleted (if it existed).")
 
     # Commit changes and close connection
     connection.commit()
     connection.close()
 
-    print("Finished deleting tables.")
-    return
-list_tables()
+    print("Finished deleting the table.")
 
 
+# delete_tables('ScoringStrategies')
+
+
+print(get_table('ScoringStrategies'))

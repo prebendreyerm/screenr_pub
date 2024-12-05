@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 from tqdm import tqdm
+import multiprocessing
 
 # Connect to the SQLite database
 conn = sqlite3.connect(r'backend\data\financial_data.db')
@@ -23,7 +24,6 @@ def clean_data(df):
     df = df.dropna()
     return df
 
-# Ensure the DataFrame is sorted by ticker and year
 # Ensure the DataFrame is sorted by ticker and year
 def sort_data(df):
     df['calendarYear'] = df['calendarYear'].astype(int)  # Convert calendarYear to integers
@@ -108,7 +108,7 @@ def compare_with_baseline(strategy_results, baseline_strategy_name, overall_retu
             std_dev = np.std(investment_results['gain_pct'])
 
             with conn:
-                conn.execute("""
+                conn.execute(""" 
                     INSERT OR REPLACE INTO ScoringStrategies (strategy_name, columns_used, ranking_direction, sector, overall_return, std_dev)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """, (strategy_name, columns_used_str, ranking_direction_str, sector, overall_return_pct, std_dev))
@@ -118,95 +118,71 @@ def compare_with_baseline(strategy_results, baseline_strategy_name, overall_retu
             break
     return updated
 
-# Check if a baseline strategy exists
-baseline_strategy = conn.execute("""
-    SELECT * FROM ScoringStrategies WHERE strategy_name = 'Baseline'
-""").fetchone()
-
-if baseline_strategy:
-    # Load existing baseline strategy
-    baseline_strategy_name = baseline_strategy[0]
-    initial_columns = baseline_strategy[1].split(',')
-    initial_ascending_flags = [flag == 'True' for flag in baseline_strategy[2].split(',')]
-    overall_return_pct_baseline = baseline_strategy[4]
-    baseline_std_dev = baseline_strategy[5]
-    print(f"Loaded existing baseline strategy: {baseline_strategy_name}")
-    print(f"Overall return: {overall_return_pct_baseline:.2f}%")
-    print(f"Standard deviation: {baseline_std_dev:.2f}")
-else:
-    # Create a new random baseline strategy
-    num_columns = random.randint(2, len(scoring_columns))
-    initial_columns = random.sample(scoring_columns, num_columns)
-    initial_ascending_flags = [random.choice([True, False]) for _ in initial_columns]
-
-    baseline_strategy_name = "Baseline"
-    investment_results_baseline, total_value_baseline, overall_return_pct_baseline = calculate_scores_and_backtest(
-        df, initial_columns, initial_ascending_flags
-    )
-    baseline_std_dev = np.std(investment_results_baseline['gain_pct'])
-
-    # Save the new baseline strategy to the database
-    with conn:
-        conn.execute("""
-            INSERT INTO ScoringStrategies (strategy_name, columns_used, ranking_direction, sector, overall_return, std_dev)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            baseline_strategy_name,
-            ','.join(initial_columns),
-            ','.join(map(str, initial_ascending_flags)),
-            'All',  # Sector-independent
-            overall_return_pct_baseline,
-            baseline_std_dev
-        ))
-
-    print(f"Initialized new random baseline strategy: {baseline_strategy_name}")
-    print(f"Overall return: {overall_return_pct_baseline:.2f}%")
-    print(f"Standard deviation: {baseline_std_dev:.2f}")
-
-# Run simulations to improve upon the baseline strategy
-num_simulations = 9000
-tested_strategies = set()
-
-for i in tqdm(range(num_simulations)):
+# Function for simulating and backtesting a single strategy
+def run_simulation(i, df, scoring_columns):
     num_columns = random.randint(2, len(scoring_columns))
     selected_columns = random.sample(scoring_columns, num_columns)
     ascending_flags = [random.choice([True, False]) for _ in selected_columns]
 
     strategy_identifier = (tuple(selected_columns), tuple(ascending_flags))
-    if strategy_identifier in tested_strategies:
-        continue
+    strategy_name = f'Simulation_{i + 1}'
 
-    tested_strategies.add(strategy_identifier)
-    investment_results, total_value, overall_return_pct = calculate_scores_and_backtest(
-        df, selected_columns, ascending_flags
-    )
+    investment_results, total_value, overall_return_pct = calculate_scores_and_backtest(df, selected_columns, ascending_flags)
+
+    return strategy_name, investment_results, total_value, overall_return_pct, selected_columns
+
+# Start with a random strategy as the baseline
+num_columns = random.randint(2, len(scoring_columns))
+initial_columns = random.sample(scoring_columns, num_columns)
+initial_ascending_flags = [random.choice([True, False]) for _ in initial_columns]
+
+# Calculate scores for the initial random strategy
+baseline_strategy_name = "Baseline"
+investment_results_baseline, total_value_baseline, overall_return_pct_baseline = calculate_scores_and_backtest(
+    df, initial_columns, initial_ascending_flags
+)
+baseline_std_dev = np.std(investment_results_baseline['gain_pct'])
+
+print(f"Initialized with random strategy: {baseline_strategy_name}")
+print(f"Initial overall return: {overall_return_pct_baseline:.2f}%")
+print(f"Initial standard deviation: {baseline_std_dev:.2f}")
+
+# Save the initial random strategy to the database
+with conn:
+    conn.execute(""" 
+        INSERT INTO ScoringStrategies (strategy_name, columns_used, ranking_direction, sector, overall_return, std_dev)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        baseline_strategy_name,
+        ','.join(initial_columns),
+        ','.join(map(str, initial_ascending_flags)),
+        'All',  # Sector-independent
+        overall_return_pct_baseline,
+        baseline_std_dev
+    ))
+
+# Parallel simulation using multiprocessing
+num_simulations = 200
+strategy_results = {}
+tested_strategies = set()
+
+# Use multiprocessing Pool to run simulations in parallel
+with multiprocessing.Pool() as pool:
+    simulation_results = pool.starmap(run_simulation, [(i, df, scoring_columns) for i in range(num_simulations)])
+
+# Store the results and compare with the baseline
+for strategy_name, investment_results, total_value, overall_return_pct, strategy_columns in simulation_results:
+    strategy_results[strategy_name] = (investment_results, total_value, overall_return_pct, strategy_columns)
 
     # Compare with the current baseline strategy
-    if overall_return_pct > overall_return_pct_baseline and np.std(investment_results['gain_pct']) < baseline_std_dev:
-        baseline_strategy_name = "Baseline"
+    if compare_with_baseline(strategy_results, baseline_strategy_name, overall_return_pct_baseline, baseline_std_dev, 'All'):
+        baseline_strategy_name = strategy_name
         overall_return_pct_baseline = overall_return_pct
         baseline_std_dev = np.std(investment_results['gain_pct'])
 
-        # Update the baseline strategy in the database
-        with conn:
-            conn.execute("""
-                UPDATE ScoringStrategies
-                SET columns_used = ?, ranking_direction = ?, overall_return = ?, std_dev = ?
-                WHERE strategy_name = 'Baseline'
-            """, (
-                ','.join(selected_columns),
-                ','.join(map(str, ascending_flags)),
-                overall_return_pct_baseline,
-                baseline_std_dev
-            ))
-
-        print(f"Updated Baseline strategy with superior strategy.")
-        print(f"New overall return: {overall_return_pct_baseline:.2f}%")
-        print(f"New standard deviation: {baseline_std_dev:.2f}")
-
 # Plot the yearly returns of the final baseline strategy
 if baseline_strategy_name:
-    yearly_returns = investment_results.groupby('year')['gain_pct'].mean()
+    yearly_returns = investment_results_baseline.groupby('year')['gain_pct'].mean()
     plt.figure(figsize=(12, 8))
     yearly_returns.plot(kind='bar')
     plt.xlabel('Year')
