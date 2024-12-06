@@ -62,7 +62,7 @@ def delete_tables(table_name):
     print("Finished deleting the table.")
 
 
-# delete_tables('ScoringStrategies')
+delete_tables('ScoringStrategies')
 
 
 print(get_table('ScoringStrategies'))

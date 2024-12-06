@@ -27,9 +27,11 @@ CREATE TABLE IF NOT EXISTS ScoringStrategies (
     ranking_direction TEXT,
     sector TEXT,
     overall_return REAL,
-    std_dev REAL
+    std_dev REAL,
+    positive_return_ratio REAL
 )
 ''')
+
 
 
 # Create AnnualRatios table
